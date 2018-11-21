@@ -54,3 +54,8 @@ export interface CancelToken {
 export interface Cancel {
   message: string
 }
+
+export interface Interceptor {
+  fulfilled: (data: any) => any
+  rejected: (error: any) => any
+}
