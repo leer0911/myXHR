@@ -15,7 +15,7 @@ export interface AxiosRequestConfig {
   onDownloadProgress?: (progressEvent: any) => void
   validateStatus?: (status: number) => boolean
   adapter?: AxiosAdapter
-  auth?: AxiosBasicCredentials
+  auth?: any
   transformRequest?: AxiosTransformer | AxiosTransformer[]
   transformResponse?: AxiosTransformer | AxiosTransformer[]
   cancelToken?: CancelToken
@@ -37,8 +37,8 @@ export interface AxiosResponse<T = any> {
 }
 
 export interface AxiosBasicCredentials {
-  username: string
-  password: string
+  username?: string
+  password?: string
 }
 
 export interface AxiosTransformer {
