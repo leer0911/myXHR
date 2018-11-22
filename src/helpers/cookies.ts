@@ -4,7 +4,7 @@ const standardBrowserEnv = {
   write (
     name: string,
     value: string,
-    expires: number,
+    expires?: number,
     path?: string,
     domain?: string,
     secure?: boolean
@@ -13,7 +13,7 @@ const standardBrowserEnv = {
 
     cookie.push(`${name}=${encodeURIComponent(value)}`)
 
-    if (isNumber(expires)) {
+    if (expires && isNumber(expires)) {
       cookie.push(`expires=${new Date(expires).toUTCString()}`)
     }
 
