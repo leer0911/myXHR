@@ -22,6 +22,6 @@
     "karma-typescript": "^3.0.12",
     "tslint": "^5.10.0",
     "tslint-config-standard-plus": "^1.0.0",
-    "typescript": "^2.8.3"
+    "typescript": "^3.1.6"
   }
 }
