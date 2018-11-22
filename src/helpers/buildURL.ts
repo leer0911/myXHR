@@ -13,7 +13,7 @@ const encode = (val: any) => {
 
 const buildURL = (
   url: string,
-  params: any,
+  params?: any,
   paramsSerializer?: (params: any) => any
 ) => {
   if (!params) {
@@ -74,7 +74,9 @@ const buildURL = (
   for (const key in methodsMap) {
     if (methodsMap.hasOwnProperty(key)) {
       const methodsMapFn = methodsMap[key]
-      serializedParams = methodsMapFn()
+      if (!serializedParams) {
+        serializedParams = methodsMapFn()
+      }
     }
   }
 
