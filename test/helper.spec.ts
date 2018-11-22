@@ -2,10 +2,12 @@ import * as sinon from 'sinon'
 import {
   buildURL,
   combineURLs,
+  cookies,
   isAbsoluteURL,
   isURLSameOrigin,
   normalizeHeaderName,
-  parseHeaders
+  parseHeaders,
+  transformData
 } from '../src/helpers/index'
 
 describe('helpers/buildURL', function () {
@@ -223,5 +225,68 @@ describe('helpers/parseHeaders', function () {
 
     expect(parsed['age']).toEqual('age-a')
     expect(parsed['foo']).toEqual('foo-a, foo-b')
+  })
+})
+
+describe('helpers/cookies', function () {
+  afterEach(function () {
+    // Remove all the cookies
+    const expires = Date.now() - (60 * 60 * 24 * 7)
+    document.cookie.split(';').map(function (cookie) {
+      return cookie.split('=')[0]
+    }).forEach(function (name) {
+      document.cookie = name + '=; expires=' + new Date(expires).toUTCString()
+    })
+  })
+
+  it('should write cookies', function () {
+    cookies.write('foo', 'baz')
+    expect(document.cookie).toEqual('foo=baz')
+  })
+
+  it('should read cookies', function () {
+    cookies.write('foo', 'abc')
+    cookies.write('bar', 'def')
+    expect(cookies.read('foo')).toEqual('abc')
+    expect(cookies.read('bar')).toEqual('def')
+  })
+
+  it('should remove cookies', function () {
+    cookies.write('foo', 'bar')
+    cookies.remove('foo')
+    expect(cookies.read('foo')).toEqual(null)
+  })
+
+  it('should uri encode values', function () {
+    cookies.write('foo', 'bar baz%')
+    expect(document.cookie).toEqual('foo=bar%20baz%25')
+  })
+})
+
+describe('core/transformData', function () {
+  it('should support a single transformer', function () {
+    let data
+    data = transformData(data, null, function (data) {
+      data = 'foo'
+      return data
+    })
+
+    expect(data).toEqual('foo')
+  })
+
+  it('should support an array of transformers', function () {
+    let data = ''
+    data = transformData(data, null, [ function (data) {
+      data += 'f'
+      return data
+    }, function (data) {
+      data += 'o'
+      return data
+    }, function (data) {
+      data += 'o'
+      return data
+    } ])
+
+    expect(data).toEqual('foo')
   })
 })
