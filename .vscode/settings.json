@@ -8,12 +8,7 @@
   "files.insertFinalNewline": true,
   "files.exclude": {
     "**/.git": true,
-    "**/.DS_Store": true,
-    "node_modules": true,
-    "test-lib": true,
-    "lib": true,
-    "coverage": true,
-    "npm": true
+    "**/.DS_Store": true
   },
   "eslint.enable": false,
   "tslint.autoFixOnSave": true,
