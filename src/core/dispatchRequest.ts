@@ -11,22 +11,22 @@ const throwIfCancellationRequested = (config: AxiosRequestConfig) => {
 
 const dispatchRequest = (config: AxiosRequestConfig) => {
   throwIfCancellationRequested(config)
-
+  if (!defaults.adapter) {
+    return undefined
+  }
   const adapter: AxiosAdapter = config.adapter || defaults.adapter
   const {
     headers,
     baseURL,
-    url,
     data,
-    transformRequest,
-    transformResponse,
+    url = '',
+    transformRequest = [],
+    transformResponse = [],
     method = 'get'
   } = config
 
   const suportBaseURL = () => {
-    return baseURL && !isAbsoluteURL(url)
-      ? combineURLs(config.baseURL, config.url)
-      : url
+    return baseURL && !isAbsoluteURL(url) ? combineURLs(baseURL, url) : url
   }
   const flattenHeaders = () => {
     // 使用 ES6 rest 与 解构赋值 过滤 header 的一些属性

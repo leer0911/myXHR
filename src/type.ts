@@ -59,3 +59,14 @@ export interface Interceptor {
   fulfilled: (data: any) => any
   rejected: (error: any) => any
 }
+
+export interface AxiosError extends Error {
+  config: AxiosRequestConfig
+  code?: string
+  request?: any
+  response?: AxiosResponse
+  isAxiosError: boolean
+}
+export interface AxiosReslove {
+  (value?: AxiosResponse<any> | PromiseLike<AxiosResponse<any>>): void
+}
