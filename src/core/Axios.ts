@@ -10,6 +10,10 @@ export default class Axios {
   }
   constructor (instanceConfig: AxiosRequestConfig) {
     this.defaults = instanceConfig
+    this.interceptors = {
+      request: new InterceptorManager(),
+      response: new InterceptorManager()
+    }
   }
 
   request (config: AxiosRequestConfig = {}) {
