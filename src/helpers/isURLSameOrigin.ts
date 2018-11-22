@@ -7,15 +7,6 @@ const isURLSameOrigin = (requestURL: any) => {
   const msie = /(msie|trident)/i.test(navigator.userAgent)
   const urlParsingNode = document.createElement('a')
   const resolveURL = (url: string) => {
-    const {
-      protocol = '',
-      search = '',
-      hash = '',
-      host,
-      hostname,
-      port,
-      pathname
-    } = urlParsingNode
 
     let href = url
 
@@ -26,6 +17,16 @@ const isURLSameOrigin = (requestURL: any) => {
     }
 
     urlParsingNode.setAttribute('href', href)
+
+    const {
+      protocol = '',
+      search = '',
+      hash = '',
+      host,
+      hostname,
+      port,
+      pathname
+    } = urlParsingNode
 
     // urlParsingNode provides the UrlUtils interface - http://url.spec.whatwg.org/#urlutils
     return {
