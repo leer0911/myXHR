@@ -1,7 +1,7 @@
 import defaults from '../config/defaults'
 import { isCancel } from '../cancel/index'
-import { AxiosRequestConfig, AxiosAdapter } from '../type'
-import { isAbsoluteURL, combineURLs, transformData } from '../helpers/index'
+import { AxiosAdapter, AxiosRequestConfig } from '../type'
+import { combineURLs, isAbsoluteURL, transformData } from '../helpers/index'
 
 const throwIfCancellationRequested = (config: AxiosRequestConfig) => {
   if (config.cancelToken) {
@@ -31,7 +31,7 @@ const dispatchRequest = (config: AxiosRequestConfig) => {
   const flattenHeaders = () => {
     // 使用 ES6 rest 与 解构赋值 过滤 header 的一些属性
     const {
-      delete: DELETE, // 避免关键字
+      delete: DELETE,
       get,
       head,
       post,
@@ -50,7 +50,7 @@ const dispatchRequest = (config: AxiosRequestConfig) => {
   const requestData: AxiosRequestConfig = {
     ...config,
     url: suportBaseURL(),
-    data: transformData(data, headers, transformRequest), // 格式化请求数据
+    data: transformData(data, headers, transformRequest),
     headers: flattenHeaders()
   }
 

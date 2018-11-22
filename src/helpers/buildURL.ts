@@ -1,4 +1,4 @@
-import { isURLSearchParams, isArray, isObject, isDate, forEach } from './utils'
+import { forEach, isArray, isDate, isObject, isURLSearchParams } from './utils'
 
 const encode = (val: any) => {
   return encodeURIComponent(val)

@@ -1,4 +1,4 @@
-import { isStandardBrowserEnv, isNumber, isString } from './utils'
+import { isNumber, isStandardBrowserEnv, isString } from './utils'
 
 const standardBrowserEnv = {
   write (

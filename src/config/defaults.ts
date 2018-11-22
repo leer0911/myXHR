@@ -2,14 +2,14 @@ import XHR from '../adapters/xhr'
 import { AxiosRequestConfig } from '../type'
 import { normalizeHeaderName } from '../helpers/index'
 import {
+  isArrayBuffer,
+  isArrayBufferView,
+  isBlob,
   isFile,
   isFormData,
-  isBlob,
-  isArrayBuffer,
+  isObject,
   isStream,
-  isArrayBufferView,
-  isURLSearchParams,
-  isObject
+  isURLSearchParams
 } from '../helpers/utils'
 
 const DEFAULT_CONTENT_TYPE = {

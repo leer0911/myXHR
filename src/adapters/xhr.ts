@@ -1,12 +1,12 @@
 import settle from '../core/settle'
 import createError from '../core/createError'
 import { isFormData, isStandardBrowserEnv } from '../helpers/utils'
-import { AxiosRequestConfig, AxiosPromise } from '../type'
+import { AxiosPromise, AxiosRequestConfig } from '../type'
 import {
   buildURL,
-  parseHeaders,
+  cookies,
   isURLSameOrigin,
-  cookies
+  parseHeaders
 } from '../helpers/index'
 
 const xhrAdapter = (config: AxiosRequestConfig): AxiosPromise => {
@@ -66,7 +66,6 @@ const xhrAdapter = (config: AxiosRequestConfig): AxiosPromise => {
               typeof requestData === 'undefined' &&
               key.toLowerCase() === 'content-type'
             ) {
-              // 移除无效值
               delete requestHeaders[key]
             } else {
               request.setRequestHeader(key, val)
@@ -157,7 +156,6 @@ const xhrAdapter = (config: AxiosRequestConfig): AxiosPromise => {
       }
 
       if (cancelToken) {
-        // 取消发送请求
         cancelToken.promise.then((cancel) => {
           if (!request) {
             return
