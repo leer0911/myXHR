@@ -70,3 +70,25 @@ export interface AxiosError extends Error {
 export interface AxiosReslove {
   (value?: AxiosResponse<any> | PromiseLike<AxiosResponse<any>>): void
 }
+
+export interface CancelStatic {
+  new (message?: string): Cancel
+}
+
+export interface Cancel {
+  message: string
+}
+
+export interface Canceler {
+  (message?: string): void
+}
+
+export interface CancelTokenStatic {
+  new (executor: (cancel: Canceler) => void): CancelToken
+  source (): CancelTokenSource
+}
+
+export interface CancelTokenSource {
+  token: CancelToken
+  cancel: Canceler
+}
