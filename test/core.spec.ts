@@ -1,6 +1,8 @@
 import settle from '../src/core/settle'
 import mergeConfig from '../src/core/mergeConfig'
 import defaults from '../src/config/defaults'
+import enhanceError from '../src/core/enhanceError'
+import createError from '../src/core/createError'
 
 describe('core/settle', function () {
   let resolve: any
@@ -127,12 +129,18 @@ describe('core/mergeConfig', function () {
 
   it('should overwrite auth, headers, proxy with a non-object value', function () {
     expect(
-      mergeConfig({ auth: { username: 'foo', password: 'test' } }, { auth: false })
+      mergeConfig(
+        { auth: { username: 'foo', password: 'test' } },
+        { auth: false }
+      )
     ).toEqual({
       auth: false
     })
     expect(
-      mergeConfig({ auth: { username: 'foo', password: 'test' } }, { auth: null })
+      mergeConfig(
+        { auth: { username: 'foo', password: 'test' } },
+        { auth: null }
+      )
     ).toEqual({
       auth: null
     })
@@ -141,5 +149,56 @@ describe('core/mergeConfig', function () {
   it('should allow setting other options', function () {
     const merged = mergeConfig(defaults, { timeout: 123 })
     expect(merged.timeout).toEqual(123)
+  })
+})
+
+describe('core/enhanceError', function () {
+  it('should add config, config, request and response to error', function () {
+    const error: any = new Error('Boom!')
+    const request: any = { path: '/foo' }
+    const response: any = { status: 200, data: { foo: 'bar' } }
+    const params: any = { foo: 'bar' }
+    enhanceError(error, params, 'ESOMETHING', request, response)
+    expect(error.config).toEqual({ foo: 'bar' })
+    expect(error.code).toBe('ESOMETHING')
+    expect(error.request).toBe(request)
+    expect(error.response).toBe(response)
+    expect(error.isAxiosError).toBe(true)
+  })
+
+  it('should return error', function () {
+    const error: any = new Error('Boom!')
+    const params: any = { foo: 'bar' }
+    expect(enhanceError(error, params, 'ESOMETHING')).toBe(error)
+  })
+})
+
+describe('core/createError', function () {
+  it('should create an Error with message, config, code, request, response and isAxiosError', function () {
+    const request: any = { path: '/foo' }
+    const response: any = { status: 200, data: { foo: 'bar' } }
+    const params: any = { foo: 'bar' }
+    const error = createError('Boom!', params, 'ESOMETHING', request, response)
+    expect(error instanceof Error).toBe(true)
+    expect(error.message).toBe('Boom!')
+    expect(error.config).toEqual(params)
+    expect(error.code).toBe('ESOMETHING')
+    expect(error.request).toBe(request)
+    expect(error.response).toBe(response)
+    expect(error.isAxiosError).toBe(true)
+  })
+  it('should create an Error that can be serialized to JSON', function () {
+    // Attempting to serialize request and response results in
+    //    TypeError: Converting circular structure to JSON
+    const request: any = { path: '/foo' }
+    const response: any = { status: 200, data: { foo: 'bar' } }
+    const params: any = { foo: 'bar' }
+    const error: any = createError('Boom!', params, 'ESOMETHING', request, response)
+    const json = error.toJSON()
+    expect(json.message).toBe('Boom!')
+    expect(json.config).toEqual({ foo: 'bar' })
+    expect(json.code).toBe('ESOMETHING')
+    expect(json.request).toBe(undefined)
+    expect(json.response).toBe(undefined)
   })
 })

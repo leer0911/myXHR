@@ -4,7 +4,7 @@ const enhanceError = (
   error: any,
   config: AxiosRequestConfig,
   code: string,
-  request: any,
+  request?: any,
   response?: AxiosResponse
 ): AxiosError => {
   if (code) {
