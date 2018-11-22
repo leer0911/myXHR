@@ -92,3 +92,57 @@ export interface CancelTokenSource {
   token: CancelToken
   cancel: Canceler
 }
+export interface AxiosInterceptorManager<V> {
+  use (
+    onFulfilled?: (value: V) => V | Promise<V>,
+    onRejected?: (error: any) => any
+  ): number
+  eject (id: number): void
+}
+export interface AxiosInstance {
+  (config: AxiosRequestConfig): AxiosPromise
+  (url: string, config?: AxiosRequestConfig): AxiosPromise
+  defaults: AxiosRequestConfig
+  interceptors: {
+    request: AxiosInterceptorManager<AxiosRequestConfig>;
+    response: AxiosInterceptorManager<AxiosResponse>;
+  }
+  getUri (config?: AxiosRequestConfig): string
+  request<T = any, R = AxiosResponse<T>> (
+    config: AxiosRequestConfig
+  ): Promise<R>
+  get<T = any, R = AxiosResponse<T>> (
+    url: string,
+    config?: AxiosRequestConfig
+  ): Promise<R>
+  delete<T = any, R = AxiosResponse<T>> (
+    url: string,
+    config?: AxiosRequestConfig
+  ): Promise<R>
+  head<T = any, R = AxiosResponse<T>> (
+    url: string,
+    config?: AxiosRequestConfig
+  ): Promise<R>
+  post<T = any, R = AxiosResponse<T>> (
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<R>
+  put<T = any, R = AxiosResponse<T>> (
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<R>
+  patch<T = any, R = AxiosResponse<T>> (
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<R>
+}
+export interface AxiosStatic extends AxiosInstance {
+  Cancel: CancelStatic
+  create (config?: AxiosRequestConfig): AxiosInstance
+  isCancel (value: any): boolean
+  all<T> (values: (T | Promise<T>)[]): Promise<T[]>
+  spread<T, R> (callback: (...args: T[]) => R): (array: T[]) => R
+}
