@@ -23,5 +23,9 @@
     "tslint": "^5.10.0",
     "tslint-config-standard-plus": "^1.0.0",
     "typescript": "^3.1.6"
+  },
+  "dependencies": {
+    "@types/sinon": "^5.0.7",
+    "sinon": "^7.1.1"
   }
 }

@@ -73,6 +73,7 @@ const isStandardBrowserEnv = () => {
   ) {
     return false
   }
+
   return window && document
 }
 
