@@ -1,6 +1,6 @@
 # TypeScript 重构 Axios 全攻略
 
-拒绝做一个只会用 API 的文档工程师，本文将会让你从重复造轮子的过程中掌握 web 开发相关的基本知识。
+拒绝做一个只会用 API 的文档工程师，本文将会让你从重复造轮子的过程中掌握 web 开发相关的基本知识，特别是 XMLHttpRequest。
 
 又是一篇关于 TypeScript 的分享，年底了，请允许我沉淀一下。上次用 TypeScript 重构 Vconsole 的[项目](https://juejin.im/post/5bf278295188252e89668ed2) 埋下了对 [Axios](https://github.com/axios/axios) 源码解析的梗。于是，这次分享的主题就是 **如何从零用 TypeScript 重构 Axios 以及为什么我要这么做**。
 
@@ -13,6 +13,8 @@
 - XHR，XHR，XHR
 - HTTP，HTTP，HTTP
 - 单元测试
+
+[项目源码](https://github.com/leer0911/myXHR)，分享可能会错过某些细节实现，需要的可以看源码，测试用例基本跑通了。想想，5w star 的库，就这样自己实现了一遍。
 
 ## 工程简介
 
@@ -37,13 +39,13 @@ axios 是基于 Promise 用于浏览器和 nodejs 的 HTTP 客户端，它本身
 
 首先来看下目录。
 
-![](./img/dir.png)
+![](https://raw.githubusercontent.com/leer0911/myXHR/master/doc/img/dir.png)
 
-目录与 Axios 基本保持一致，core 是 `Axios` 类的核心代码。adapters 是 XHR 核心实现，Cancel 是与 取消请求相关的代码。helpers 用于放常用的工具函数。`Karma.conf.js` 及 test 目录与单元测试相关。`.travis.yml` 用于配置[ 在线持续集成](https://travis-ci.org/)，另外可在 github 的 README  文件配置构建情况。
+目录与 Axios 基本保持一致，core 是 `Axios` 类的核心代码。adapters 是 XHR 核心实现，Cancel 是与 取消请求相关的代码。helpers 用于放常用的工具函数。`Karma.conf.js` 及 test 目录与单元测试相关。`.travis.yml` 用于配置[ 在线持续集成](https://travis-ci.org/)，另外可在 github 的 README 文件配置构建情况。
 
 ### Parcel 集成
 
-打包工具选用的是 [Parcel](https://parceljs.org/)，目的是零配置编译 TypeScript 。入口文件为 src 目录下的 `index.html`，只需在  入口文件里引入 `index.ts` 即可完成热更新，TypeScript 编译等配置：
+打包工具选用的是 [Parcel](https://parceljs.org/)，目的是零配置编译 TypeScript 。入口文件为 src 目录下的 `index.html`，只需在 入口文件里引入 `index.ts` 即可完成热更新，TypeScript 编译等配置：
 
 ```html
 <body>
@@ -90,7 +92,7 @@ parcel build ./src/index.ts
 
 配置完成后，可断点调试，按 F5 即可开始调试。
 
-![](./img/debugging.png)
+![](https://raw.githubusercontent.com/leer0911/myXHR/master/doc/img/debugging.png)
 
 ## TypeScript 配置
 
@@ -119,19 +121,19 @@ TypeScript 整体配置和规范检测参考如下：
 }
 ```
 
-如果有安装 [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)需注意两者风格冲突，无论格式化代码的插件是什么，我们的目的只有一个，就是  保证代码格式化风格统一。（ 最好遵循 lint 规范 ）。
+如果有安装 [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)需注意两者风格冲突，无论格式化代码的插件是什么，我们的目的只有一个，就是 保证代码格式化风格统一。（ 最好遵循 lint 规范 ）。
 
-**ps：`.vscode` 目录可随 git 跟踪进版本管理，这样可以让  clone 仓库的使用者更友好。**
+**ps：`.vscode` 目录可随 git 跟踪进版本管理，这样可以让 clone 仓库的使用者更友好。**
 
 另外可以通过，vscode 的 **控制面板中的问题 tab** 迅速查看当前项目问题所在。
 
-![](./img/error.png)
+![](https://raw.githubusercontent.com/leer0911/myXHR/master/doc/img/error.png)
 
 ## TypeScript 代码片段测试
 
 我们时常会有想要编辑某段测试代码，又不想在项目里编写的需求(比如用 TypeScript 写一个 deepCopy 函数)，不想脱离 vscode 编辑器的话，推荐使用 [quokka](https://marketplace.visualstudio.com/items?itemName=WallabyJs.quokka-vscode)，一款可立即执行脚本的插件。
 
-![](./img/type.png)
+![](https://raw.githubusercontent.com/leer0911/myXHR/master/doc/img/type.png)
 
 - 如果需要导入其他库可参考[quokka 配置](https://quokkajs.com/docs/configuration.html#global-config-file)
 - 希望引入浏览器环境，可在 quokkajs 项目目录全局安装[jsdom-quokka-plugin](https://github.com/wallabyjs/jsdom-quokka-plugin)插件
@@ -149,23 +151,23 @@ const testDiv = document.getElementById('test');
 console.log(testDiv.innerHTML);
 ```
 
-![](./img/quokka.png)
+![](https://raw.githubusercontent.com/leer0911/myXHR/master/doc/img/quokka.png)
 
 ## API 概览
 
-重构的思路首先是看文档提供的 API，或者 `index.d.ts` 声明文件。 优秀一点的源码可以看它的测试用例，一般会提供 API 相关的测试，如 [Axios API 测试用例](https://github.com/axios/axios/blob/master/test/specs/api.spec.js) ，本次分享实现 API 如下：
+重构的思路首先是看文档提供的 API，或者 `index.d.ts` 声明文件。 优秀一点的源码可以看它的测试用例，一般会提供 API 相关的测试，如 [Axios API 测试用例](https://github.com/axios/axios/blob/master/test/specs/api.spec.js) ，本次分享实现 API 如下：
 
-![](./img/api.png)
+![](https://raw.githubusercontent.com/leer0911/myXHR/master/doc/img/api.png)
 
 总得下来就是五类 API，比葫芦娃还少。有信心了吧，我们来一个个"送人头"。
 
 ## Axios 类
 
-这些 API 可以统称为实例方法，有实例，就肯定有类。所以再讲 API 实现之前，先让我们  来看一下 Axios 类。
+这些 API 可以统称为实例方法，有实例，就肯定有类。所以在讲 API 实现之前，先让我们来看一下 Axios 类。
 
-![](./img/axios.png)
+![](https://raw.githubusercontent.com/leer0911/myXHR/master/doc/img/axios.png)
 
-两个属性（defaults，interceptors），一个通用方法（ request ，其余都是基于 request，只是参数不同 ）真的不能再简单了。
+两个属性（defaults，interceptors），一个通用方法（ request ，其余的方法如，get、post、等都是基于 request，只是参数不同 ）真的不能再简单了。
 
 ```ts
 export default class Axios {
@@ -183,7 +185,7 @@ export default class Axios {
 
 ## axios 实例
 
-Axios 库默认导出的是 Axios 的一个实例 axios，而不是 Axios 类本身。但是，这里并没有直接返回 Axios 的实例，而是将 Axios 实例方法 request 的上下文设置为了 Axios。 所以 axios 的类型是 function，不是 object。但由于 function 也是 Object 所以可以设置属性和方法。于是 axios 既可以表现的像实例，又可以直接调用 `axios(config)`。具体实现如下：
+Axios 库默认导出的是 Axios 的一个实例 axios，而不是 Axios 类本身。但是，这里并没有直接返回 Axios 的实例，而是将 Axios 实例方法 request 的上下文设置为了 Axios。 所以 axios 的类型是 function，不是 object。但由于 function 也是 Object 所以可以设置属性和方法。于是 axios 既可以表现的像实例，又可以直接函数调用 `axios(config)`。具体实现如下：
 
 ```ts
 const createInstance = (defaultConfig: AxiosRequestConfig) => {
@@ -228,9 +230,9 @@ const defaults: AxiosRequestConfig = {
 };
 ```
 
-这边先讲一些数据处理以及适配相关的配置，接下来把与请求相关的配置详细介绍一遍。
+也就是说，如果你用 Axios ，你应该知道它有哪些默认设置。
 
-## Axios 修改配置
+## Axios 传入配置
 
 先来看下 axios 接受的请求参数都有哪些属性，以下参数属性均是可选的。使用 TypeScript 事先定义了这些参数的类型，接下来传参的时候就可以检验传参的类型是否正确。
 
@@ -239,17 +241,17 @@ export interface AxiosRequestConfig {
   url?: string; // 请求链接
   method?: string; // 请求方法
   baseURL?: string; // 请求的基础链接
-  xsrfCookieName?: string;
-  xsrfHeaderName?: string;
-  headers?: any;
-  params?: any;
-  data?: any;
-  timeout?: number;
-  withCredentials?: boolean;
-  responseType?: XMLHttpRequestResponseType;
-  paramsSerializer?: (params: any) => string;
-  onUploadProgress?: (progressEvent: any) => void;
-  onDownloadProgress?: (progressEvent: any) => void;
+  xsrfCookieName?: string; // CSRF 相关
+  xsrfHeaderName?: string; // CSRF 相关
+  headers?: any; // 请求头设置
+  params?: any; // 请求参数
+  data?: any; // 请求体
+  timeout?: number; // 超时设置
+  withCredentials?: boolean; // CSRF 相关
+  responseType?: XMLHttpRequestResponseType; // 响应类型
+  paramsSerializer?: (params: any) => string; // url query 参数格式化方法
+  onUploadProgress?: (progressEvent: any) => void; // 上传处理函数
+  onDownloadProgress?: (progressEvent: any) => void; // 下载处理函数
   validateStatus?: (status: number) => boolean;
   adapter?: AxiosAdapter;
   auth?: any;
@@ -258,10 +260,6 @@ export interface AxiosRequestConfig {
   cancelToken?: CancelToken;
 }
 ```
-
-这部分会先讲一些，常用的配置，其余会分成大模块在后续讲解( headers,xsrfCookieName,xsrfHeaderName,withCredentials,adapter )。
-
-另外，如 timeout，responseType，onUploadProgress，onDownloadProgress，validateStatus 等比较简单的不会单独讲解。
 
 ### 请求配置
 
@@ -302,7 +300,7 @@ xhr.open('get', undefined); // http://localhost:1234/undefined
 
 可以看到默认 baseURL 为 `window.location.host` 类似 `http://localhost:1234/undefined` 这种 URL 请求成功的情况是存在的。当前端动态传递 url 参数时，参数是有可能为 `null` 或 `undefined` ，如果不是通过 response 的状态码来响应操作，此时得到的结果就跟预想的不一样。**这让我想起了，JavaScript 隐式转换的坑，比比皆是。(此处安利 TypeScript 和 '===' 操作符)**
 
-![](./img/badrequest.png)
+![](https://raw.githubusercontent.com/leer0911/myXHR/master/doc/img/badrequest.png)
 
 对于这种情况，使用 TypeScript 可以在开发阶段规避这些问题。但如果是动态赋值(比如请求返回的结果作为 url 参数时)，需要给值判断下类型，必要时可抛出错误或转换为其他想要的值。
 
@@ -336,7 +334,7 @@ const suportBaseURL = () => {
 
 axios 对 params 的处理分为赋值和序列化(用户可自定义 paramsSerializer 函数)
 
-![](./img/params.png)
+![](https://raw.githubusercontent.com/leer0911/myXHR/master/doc/img/params.png)
 
 helpers 目录下的 `buildURL` 文件主要生成完整的 URL 请求地址。
 
@@ -445,7 +443,7 @@ export interface AxiosRequestConfig {
 
 一个请求头由名称（不区分大小写）后跟一个冒号“：”，冒号后跟具体的值（不带换行符）组成。该值前面的引导空白会被忽略。
 
-![](./img/requestHeader.png)
+![](https://raw.githubusercontent.com/leer0911/myXHR/master/doc/img/requestHeader.png)
 
 > 请求头可以被定义为：被用于 http 请求中并且和请求主体无关的那一类 HTTP header。某些请求头如 `Accept`, `Accept-*`, ` If-*``允许执行条件请求。某些请求头如：Cookie `, `User-Agent` 和 `Referer` 描述了请求本身以确保服务端能返回正确的响应。
 
@@ -736,11 +734,11 @@ if (cancelToken) {
 
 最后到了单元测试的环节，先来看下相关依赖。
 
-![](./img/package.png)
+![](https://raw.githubusercontent.com/leer0911/myXHR/master/doc/img/package.png)
 
 用的是 [karma](https://karma-runner.github.io/latest/index.html)，配置如下：
 
-![](./img/karma2.png)
+![](https://raw.githubusercontent.com/leer0911/myXHR/master/doc/img/karma2.png)
 
 执行命令：
 
@@ -748,7 +746,7 @@ if (cancelToken) {
 yarn test
 ```
 
-![](./img/karma.png)
+![](https://raw.githubusercontent.com/leer0911/myXHR/master/doc/img/karma.png)
 
 本项目是基于 `jasmine` 来写测试用例，还是比较简单的。
 
@@ -760,7 +758,9 @@ karma 会跑 test 目录下的所有测试用例，感觉测试用例用 TypeScr
 
 感谢能看到这里的朋友，想必也是 TypeScript 或 Axios 的粉丝，不妨相互认识一下。
 
-还是那句话，TypeScript 确实好用。短时间内就将 Axios 大致重构了一遍，感兴趣的可以跟着一起。老规矩，在分享中不会具体讲库怎么用 (想必，如果自己撸完这么一个项目，应该不用去看 API 了吧。) ，更多的是从广度拓展大家的知识点。如果对某个关键词比较陌生，这就是进步的时候了。比如笔者接下来要去深入涉略 HTTP 了。
+还是那句话，TypeScript 确实好用。短时间内就能将 Axios 大致重构了一遍，感兴趣的可以跟着一起。老规矩，在分享中不会具体讲库怎么用 (想必，如果自己撸完这么一个项目，应该不用去看 API 了吧。) ，更多的是从广度拓展大家的知识点。如果对某个关键词比较陌生，这就是进步的时候了。比如笔者接下来要去深入涉略 HTTP 了。虽然，感觉目前 TypeScript 的热度好像好不是很高。好东西，总是那些不容易变的。哈，别到时候打脸了。
+
+我变强了吗? 不扯了，听杨宗纬的 "我变了，我没变" 了。
 
 **切记，没有什么是看源码解决不了的 bug。**
 
@@ -773,3 +773,5 @@ karma 会跑 test 目录下的所有测试用例，感觉测试用例用 TypeScr
 - [HTTP 请求](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Methods)
 
 - [HTTP 缓存头部 - 完全指南](https://juejin.im/post/5a72b7fc6fb9a01cbc6eb9d9)
+
+- [XMLHttpRequest](https://developer.mozilla.org/zh-CN/docs/Web/API/XMLHttpRequest)
