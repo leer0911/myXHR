@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "private": true,
-  "description": "Promise XmlHttpRequest",
+  "description": "Promise XMLHttpRequest",
   "main": "./src/index.ts",
   "scripts": {
     "dev": "parcel ./src/index.html",
