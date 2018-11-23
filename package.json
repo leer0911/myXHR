@@ -12,8 +12,10 @@
     "build": "parcel build ./src/index.ts"
   },
   "devDependencies": {
-    "@types/jasmine": "^2.8.7",
     "@types/node": "^10.1.3",
+    "@types/sinon": "^5.0.7",
+    "@types/jasmine": "^2.8.7",
+    "sinon": "^7.1.1",
     "jasmine-core": "^3.1.0",
     "karma": "^2.0.2",
     "karma-chrome-launcher": "^2.2.0",
@@ -23,9 +25,5 @@
     "tslint": "^5.10.0",
     "tslint-config-standard-plus": "^1.0.0",
     "typescript": "^3.1.6"
-  },
-  "dependencies": {
-    "@types/sinon": "^5.0.7",
-    "sinon": "^7.1.1"
   }
 }

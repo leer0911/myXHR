@@ -10,7 +10,6 @@
 
 - 工程简介 & 开发技巧
 - API 实现
-- 设计模式的应用
 - XHR，XHR，XHR
 - HTTP，HTTP，HTTP
 - 单元测试
@@ -23,13 +22,13 @@ Axios 是什么?
 
 axios 是基于 Promise 用于浏览器和 nodejs 的 HTTP 客户端，它本身具有以下特性 ( √ 表示本项目具备该特性 )：
 
-- √ 从浏览器创建 XMLHttpRequest
-- √ 支持 Promise API
-- √ 拦截请求和响应
-- √ 转换请求和响应数据
-- √ 取消请求
-- √ 自动转换 JSON 数据
-- √ 客户端支持防止 CSRF/XSRF
+- √ 从浏览器创建 XMLHttpRequest => [XHR 实现](##XHR实现)
+- √ 支持 Promise API => [XHR 实现](##XHR实现)
+- √ 拦截请求和响应 => [请求拦截](#请求拦截)
+- √ 转换请求和响应数据 => 对应项目目录 `/src/core/dispatchRequest.ts`
+- √ 取消请求 [取消请求](##取消请求)
+- √ 自动转换 JSON 数据 => 对应项目目录 `/src/core/dispatchRequest.ts`
+- √ 客户端支持防止 CSRF/XSRF => [CSRF](##CSRF)
 - × 从 node.js 发出 http 请求
 
 这里主要讲解浏览器端的 XHR 实现，限于篇幅不会涉及 node 下的 http 。如果你愿意一层一层了解它，你会发现实现 axios 还是很简单的，来一起探索吧！
@@ -208,7 +207,7 @@ export default axios;
 
 axios 还提供了一个 Axios 类的属性，可供别的类继承。另外暴露了一个工厂函数，接收一个配置项参数，方便使用者创建多个不同配置的请求实例。
 
-## default config
+## Axios 默认配置
 
 如果不看源码，我们用一个类，最关心的应该是构造函数，默认设置了什么属性，以及我们可以修改哪些属性。体现在 Axios 就是，请求的默认配置。
 
@@ -231,7 +230,7 @@ const defaults: AxiosRequestConfig = {
 
 这边先讲一些数据处理以及适配相关的配置，接下来把与请求相关的配置详细介绍一遍。
 
-## AxiosRequestConfig
+## Axios 修改配置
 
 先来看下 axios 接受的请求参数都有哪些属性，以下参数属性均是可选的。使用 TypeScript 事先定义了这些参数的类型，接下来传参的时候就可以检验传参的类型是否正确。
 
@@ -260,7 +259,15 @@ export interface AxiosRequestConfig {
 }
 ```
 
-#### url & method & baseURL
+这部分会先讲一些，常用的配置，其余会分成大模块在后续讲解( headers,xsrfCookieName,xsrfHeaderName,withCredentials,adapter )。
+
+另外，如 timeout，responseType，onUploadProgress，onDownloadProgress，validateStatus 等比较简单的不会单独讲解。
+
+### 请求配置
+
+- url
+- method
+- baseURL
 
 ```ts
 export interface AxiosRequestConfig {
@@ -317,7 +324,84 @@ const suportBaseURL = () => {
 };
 ```
 
-## HTTP 请求方法
+### params 与 data
+
+在 axios 中 发送请求时 params 和 data 的区别在于：
+
+- params 是添加到 url 的请求字符串中的，用于 get 请求。
+
+- data 是添加到请求体（body）中的， 用于 post 请求。
+
+#### params
+
+axios 对 params 的处理分为赋值和序列化(用户可自定义 paramsSerializer 函数)
+
+![](./img/params.png)
+
+helpers 目录下的 `buildURL` 文件主要生成完整的 URL 请求地址。
+
+#### data
+
+XMLHttpRequest 是通过 [send](https://developer.mozilla.org/zh-CN/docs/Web/API/XMLHttpRequest/send) 方法把 data 添加到请求体的。
+
+语法如下：
+
+```
+send();
+send(ArrayBuffer data);
+send(ArrayBufferView data);
+send(Blob data);
+send(Document data);
+send(DOMString? data);
+send(FormData data);
+```
+
+可以看到 data 有这几种类型：
+
+- ArrayBuffer
+- ArrayBufferView
+- Blob
+- Document
+- DOMString
+- FormData
+
+希望了解 data 有哪些类型的可以看[这篇](https://www.zhangxinxu.com/wordpress/2013/10/understand-domstring-document-formdata-blob-file-arraybuffer/)
+
+实际使用：
+
+```js
+var xhr = new XMLHttpRequest();
+xhr.open('GET', '/server', true);
+
+xhr.onload = function() {
+  // 请求结束后,在此处写处理代码
+};
+
+xhr.send(null);
+// xhr.send('string');
+// xhr.send(new Blob());
+// xhr.send(new Int8Array());
+// xhr.send({ form: 'data' });
+// xhr.send(document);
+```
+
+**另外，在发送请求即调用 send（）方法之前应该根据 data 类型使用 setRequestHeader() 方法设置 Content-Type 头部来指定数据流的 MIME 类型。**
+
+Axios 在 `transformRequest` 配置项里有个默认的方法用于修改请求( 可自定义 )。
+
+```ts
+const transformRequest = () => {
+  return [
+    (data: any, headers: any) => {
+      // ...根据 data 类型修改对应 headers
+    }
+  ];
+};
+```
+
+## HTTP 相关
+
+### HTTP 请求方法
 
 axios 提供配置 HTTP 请求的方法：
 
@@ -349,7 +433,7 @@ export interface AxiosRequestConfig {
 
 篇幅有限，[看 MDN](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Methods)
 
-## HTTP 请求头
+### HTTP 请求头
 
 axios 提供配置 HTTP 请求头的方法：
 
@@ -375,6 +459,12 @@ axios 根据请求方法 设置了不同的 `Content-Type` 和 `Accpect` 请求�
 
 XMLHttpRequest 对象提供的 `XMLHttpRequest对象提供的.setRequestHeader()` 方法为开发者提供了一个操作这两种头部信息的方法，并允许开发者自定义请求头的头部信息。
 
+> XMLHttpRequest.setRequestHeader() 是设置 HTTP 请求头部的方法。此方法必须在 open() 方法和 send() 之间调用。如果多次对同一个请求头赋值，只会生成一个合并了多个值的请求头。
+
+**如果没有设置 Accept 属性，则此发送出 send() 的值为此属性的默认值*/* 。**
+
+**安全起见，有些请求头的值只能由 user agent 设置：forbidden header names 和 forbidden response header names.**
+
 默认情况下，当发送 AJAX 请求时，会附带以下头部信息：
 
 axios 设置代码如下：
@@ -399,7 +489,25 @@ if ('setRequestHeader' in requestHeaders) {
 }
 ```
 
-## 理解 CSRF(跨站请求伪造)
+至于能不能修改 http header，我的建议是当然不能随便修改任何字段。
+
+- 有一些字段是绝对不能修改的，比如最重要的 host 字段，如果没有 host 值，http1.1 协议会认为这是一个不规范的请求从而直接丢弃。同样的如果随便修改这个值，那目的网站也返回不了正确的内容
+
+- user-agent 也不建议随便修改，有很多网站是根据这个字段做内容适配的，比如 PC 和手机肯定是不一样的内容。
+
+- 有一些字段能够修改，比如 `connection`，`cache-control`等。不会影响你的正常访问，但有可能会慢一点。
+
+- 还有一些字段可以删除，比如你不希望网站记录你的访问行为或者历史信息，你可以删除 cookie，referfer 等字段。
+
+- 当然你也可以自定义构造任意你想要的字段，一般没什么影响，除非 header 太长导致内容截断。通常自定义的字段都建议 X-开头。比如 X-test: lance。
+
+### HTTP 小结
+
+只要是用户主动输入网址访问时发送的 http 请求，那这些头部字段都是浏览器自动生成的，比如 host，cookie，user-agent, Accept-Encoding 等。JS 能够控制浏览器发起请求，也能在这里增加一些 header，但是考虑到安全和性能的原因，对 JS 控制 header 的能力做了一些限制，比如 host 和 cookie, user-agent 等这些字段，JS 是无法干预的[禁止修改的消息首部](https://developer.mozilla.org/zh-CN/docs/Glossary/%E7%A6%81%E6%AD%A2%E4%BF%AE%E6%94%B9%E7%9A%84%E6%B6%88%E6%81%AF%E9%A6%96%E9%83%A8)。关于 HTTP 的知识实在多，这里简单谈到相关联的知识。这里埋下伏笔，后续若有更适合讲 HTTP 的例子，再延伸。
+
+接下来的 CSRF，就会修改 headers。
+
+## CSRF
 
 与 CSRF 相关的配置属性有这三个：
 
@@ -494,11 +602,167 @@ if (isStandardBrowserEnv()) {
 }
 ```
 
-总结一下，对于 CSRF，需要让后端同学，敏感的请求不要使用类似 get 这种幂等的，但是由于 Form 表单发起的 POST 请求并不受 CORS 的限制，因此可以任意地使用其他域的 Cookie 向其他域发送 POST 请求，形成 CSRF 攻击。
+### CSRF 小结
+
+对于 CSRF，需要让后端同学，敏感的请求不要使用类似 get 这种幂等的，但是由于 Form 表单发起的 POST 请求并不受 CORS 的限制，因此可以任意地使用其他域的 Cookie 向其他域发送 POST 请求，形成 CSRF 攻击。
 
 这时，如果有涉及敏感信息的请求，需要跟后端同学配合，进行 XSRF-Token 认证。此时，我们用 axios 请求的时候，就可以通过设置 `XMLHttpRequest.withCredentials=true` 以及设置 `axios({xsrfCookieName:'',xsrfHeaderName:''})`，不使用则会用默认的 `XSRF-TOKEN` 和 `X-XSRF-TOKEN`(拿这个跟后端配合即可)。
 
 所以，axios 特性中，客户端支持防止 CSRF/XSRF。只是方便设置 CORF-TOKEN ，关键还是要后端同学的接口支持。（**PS:前后端相亲相爱多重要，所以作为前端的我们还是尽可能多了解这方面的知识**）
+
+## XHR 实现
+
+axios 通过适配器模式，提供了支持 node.js 的 http 以及客户端的 XMLHttpRequest 的两张实现，本文主要讲解 XHR 实现。
+
+大概的实现逻辑如下：
+
+```ts
+const xhrAdapter = (config: AxiosRequestConfig): AxiosPromise => {
+  return new Promise((resolve, reject) => {
+    let request: XMLHttpRequest | null = new XMLHttpRequest();
+    setHeaders();
+    openXHR();
+    setXHR();
+    sendXHR();
+  });
+};
+```
+
+如果逐行讲解，不如录个教程视频，建议大家直接看 adapters 目录下的 `xhr.ts` ，在关键地方都有注释!
+
+1. xhrAdapter 接受 config 参数 ( 由默认参数和用户实例化时传入参数的合并值，axios 对合并值由做特殊处理。 )
+2. 设置请求头，比如根据传入的参数 `data`，`auth`,`xsrfHeaderName` 设置对应的 headers
+3. `setXHR` 主要是在 `request.readyState === 4` 的时候对响应数据作处理以及错误处理
+4. 最后执行 `XMLHttpRequest.send` 方法
+
+返回的是一个 Promise 对象，所以支持 Promise 的所有特性。
+
+## 请求拦截
+
+请求拦截在 axios 应该算是一个比较骚的操作，实现非常简单。有点像一系列按顺序执行的 Promise。
+
+直接看代码实现：
+
+```ts
+  // interceptors 分为 request 和 response。
+
+  interface interceptors {
+    request: InterceptorManager;
+    response: InterceptorManager;
+  }
+
+  request (config: AxiosRequestConfig = {}) {
+    const { method } = config
+    const newConfig: AxiosRequestConfig = {
+      ...this.defaults,
+      ...config,
+      method: method ? method.toLowerCase() : 'get'
+    }
+
+    // 拦截器原理：[请求拦截器,发送请求,响应拦截器] 顺序执行
+
+    // 1、建立一个存放 [ resolve , reject ] 的数组，
+    // 这里如果没有拦截器，则执行发送请求的操作。
+    // 由于之后都是 resolve 和 reject 的组合，所以这里默认 undefined。真是骚操作!
+
+    const chain = [ dispatchRequest, undefined ]
+
+    // 2、Promise 成功后会往下传递参数，于是这里先传入合并后的参数，供之后的拦截器使用 (如果有的话)。
+    let promise: any = Promise.resolve(newConfig)
+
+    // 3、又是一波骚操作，完美的运用了数组的方法。咋不用 reduce 实现 promise 顺序执行呢 ?
+    // request 请求拦截器肯定需要 `dispatchRequest` 在前面，于是 [interceptor.fulfilled, interceptor.rejected, dispatchRequest, undefined]
+    this.interceptors.request.forEach((interceptor: Interceptor) => {
+      chain.unshift(interceptor.fulfilled, interceptor.rejected)
+    })
+    // response 响应拦截器肯定需要在 `dispatchRequest` 后面，于是 [dispatchRequest, undefined,interceptor.fulfilled, interceptor.rejected]
+    this.interceptors.response.forEach((interceptor: Interceptor) => {
+      chain.push(interceptor.fulfilled, interceptor.rejected)
+    })
+
+    // 4、依次执行 Promise( fulfilled,rejected )
+    while (chain.length) {
+      promise = promise.then(chain.shift(), chain.shift())
+    }
+
+    return promise
+  }
+```
+
+又是对基础知识的完美运用，无论是 Promise 还是数组的变异方法都算巧妙运用。
+
+当然，Promise 的顺序执行还可以这样：
+
+```ts
+function sequenceTasks(tasks) {
+  function recordValue(results, value) {
+    results.push(value);
+    return results;
+  }
+  var pushValue = recordValue.bind(null, []);
+  return tasks.reduce(function(promise, task) {
+    return promise.then(task).then(pushValue);
+  }, Promise.resolve());
+}
+```
+
+## 取消请求
+
+如果不知道 XMLHttpRequest 有 absort 方法，肯定会觉得取消请求这种秀操作的怎么可能呢!( **PS:基础知识多重要** )
+
+```ts
+const { cancelToken } = config;
+const request = new XMLHttpRequest();
+
+if (cancelToken) {
+  cancelToken.promise
+    .then(cancel => {
+      if (!request) {
+        return;
+      }
+      request.abort();
+      reject(cancel);
+      request = null;
+    })
+    .catch(err => {
+      console.error(err);
+    });
+}
+```
+
+至于 `CancelToken` 就不讲了，好奇怪的实现。没有感悟到原作者的设计真谛!
+
+## 单元测试
+
+最后到了单元测试的环节，先来看下相关依赖。
+
+![](./img/package.png)
+
+用的是 [karma](https://karma-runner.github.io/latest/index.html)，配置如下：
+
+![](./img/karma2.png)
+
+执行命令：
+
+```
+yarn test
+```
+
+![](./img/karma.png)
+
+本项目是基于 `jasmine` 来写测试用例，还是比较简单的。
+
+karma 会跑 test 目录下的所有测试用例，感觉测试用例用 TypeScript 来写，有点难受。因为测试本来就是要让参数多样化，然而 TypeScript 事先规定了数据类型。虽然可以使用泛型来解决，但是总觉得有点变扭。
+
+不过，整个测试用例跑下来，代码强壮了很多。对于这种库来说，还是很有必要的。如果需要二次重构，基于 TypeScript 和 有覆盖大部分函数的单元测试支持，应该会容易很多。
+
+## 总结
+
+感谢能看到这里的朋友，想必也是 TypeScript 或 Axios 的粉丝，不妨相互认识一下。
+
+还是那句话，TypeScript 确实好用。短时间内就将 Axios 大致重构了一遍，感兴趣的可以跟着一起。老规矩，在分享中不会具体讲库怎么用 (想必，如果自己撸完这么一个项目，应该不用去看 API 了吧。) ，更多的是从广度拓展大家的知识点。如果对某个关键词比较陌生，这就是进步的时候了。比如笔者接下来要去深入涉略 HTTP 了。
+
+**切记，没有什么是看源码解决不了的 bug。**
 
 ## 参考
 
@@ -507,3 +771,5 @@ if (isStandardBrowserEnv()) {
 - [跨站脚本](https://zh.wikipedia.org/wiki/%E8%B7%A8%E7%B6%B2%E7%AB%99%E6%8C%87%E4%BB%A4%E7%A2%BC)
 
 - [HTTP 请求](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Methods)
+
+- [HTTP 缓存头部 - 完全指南](https://juejin.im/post/5a72b7fc6fb9a01cbc6eb9d9)
