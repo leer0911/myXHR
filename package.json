@@ -24,9 +24,7 @@
     "sinon": "^7.1.1",
     "tslint": "^5.10.0",
     "tslint-config-standard-plus": "^1.0.0",
-    "typescript": "^3.1.6"
-  },
-  "dependencies": {
+    "typescript": "^3.1.6",
     "parcel": "^1.12.3"
   }
 }
